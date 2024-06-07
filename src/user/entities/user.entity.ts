@@ -1,23 +1,22 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsInt, IsNotEmpty, IsString } from 'class-validator';
+import { User } from '@prisma/client';
 
-export class UserDto {
+export class UserEntity implements User {
 	@ApiProperty()
-	@IsEmail()
+	id: number;
+
+	@ApiProperty()
 	email: string;
 
 	@ApiProperty()
-	login?: string;
+	login: string | null;
 
 	@ApiProperty()
-	@IsNotEmpty()
 	password: string;
 
 	@ApiProperty()
-	@IsInt()
 	age: number;
 
 	@ApiProperty()
-	@IsString()
 	description: string;
 }

@@ -4,7 +4,8 @@ import { UserDto } from 'src/dto/user.dto';
 import { UserService } from 'src/user/user.service';
 import { User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
-import { IUserCredentials } from 'src/interface/user.credentials';
+import { UserCredentialsDto } from 'src/dto/userCredentials.dto';
+import { comparePassword } from 'src/common/helpers/comparePasswords.helpers';
 
 @Injectable()
 export class AuthService {
@@ -14,23 +15,23 @@ export class AuthService {
 		private readonly jwtService: JwtService,
 	) { };
 
-	async login(userCreds: IUserCredentials) {
+	async login(userCreds: UserCredentialsDto) {
 		const user = await this.validateUser(userCreds);
 		return this.generateToken(user);
 	};
 
-	private async validateUser(userCreds: IUserCredentials) {
+	private async validateUser(userCreds: UserCredentialsDto) {
 		const user = await this.userService.getByEmail(userCreds.email);
-		if (user) {
-			const isCorrectPassword = await bcrypt.compare(userCreds.password, user.password);
-			if (isCorrectPassword) {
-				return user;
-			} else {
-				throw new UnauthorizedException('Wrong password')
-			}
-		} else {
+
+		if (!user) {
 			throw new UnauthorizedException('No user with such email was found')
 		}
+
+		if (!await comparePassword(userCreds.password, user.password)) {
+			throw new UnauthorizedException('Wrong password')
+		}
+
+		return user;
 	}
 
 	async registrate(userDto: UserDto) {
