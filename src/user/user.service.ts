@@ -71,7 +71,7 @@ export class UserService {
 		const page = Number(query.page);
 		const perPage = Number(query.perPage);
 
-		if (!page || !perPage) throw new BadRequestException('page and perPage queryParams should be provided');
+		if (!page || !perPage) throw new BadRequestException('page and perPage queryParams should be provided and not be equal to zero');
 
 		const userAmount = await this.usersRepository.countUsers(query.email);
 

@@ -17,26 +17,26 @@ export class UserController {
 	@ApiCreatedResponse({ type: UserEntity })
 	async create(@Body() dto: UserDto) {
 		return await this.userService.createUser(dto);
-	}
+	};
 
 	@Get('')
 	@UseGuards(AuthGuard)
 	@ApiOkResponse({ type: UserEntity, isArray: true })
 	async getAll(@Query() query: PaginationDto) {
 		return await this.userService.getAllUsers(query);
-	}
+	};
 
 	@Patch(':id')
 	@ApiOkResponse({ type: UserEntity })
 	async update(@Param('id') idString: string, @Body() updateUserDto: UpdateUserDto) {
 		return await this.userService.updateUserById(Number(idString), updateUserDto);
-	}
+	};
 
 	@Delete(':id')
 	@ApiOkResponse({ type: UserEntity })
 	async delete(@Param('id') idString: string) {
 		return await this.userService.deleteUserById(idString);
-	}
+	};
 
 	@Get('description')
 	@ApiResponse({
@@ -47,6 +47,6 @@ export class UserController {
 	@UseGuards(AuthGuard)
 	async getUserDescription(@Headers('authorization') authorization: string) {
 		return await this.userService.getThisUserDescription(authorization);
-	}
+	};
 
 }
