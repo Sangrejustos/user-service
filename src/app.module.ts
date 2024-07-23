@@ -5,6 +5,6 @@ import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 
 @Module({
-  imports: [ConfigModule.forRoot(), DatabaseModule, AuthModule, UserModule],
+    imports: [ConfigModule.forRoot(), DatabaseModule, AuthModule, UserModule],
 })
 export class AppModule {}
