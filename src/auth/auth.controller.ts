@@ -8,18 +8,17 @@ import { TokenEntity } from './entities/token.entity';
 @Controller('auth')
 @ApiTags('auth')
 export class AuthController {
+    constructor(private authService: AuthService) {}
 
-	constructor(private authService: AuthService) { };
+    @Post('login')
+    @ApiOkResponse({ type: TokenEntity })
+    login(@Body() userCreds: UserCredentialsDto) {
+        return this.authService.login(userCreds);
+    }
 
-	@Post('login')
-	@ApiOkResponse({ type: TokenEntity })
-	login(@Body() userCreds: UserCredentialsDto) {
-		return this.authService.login(userCreds);
-	};
-
-	@Post('registration')
-	@ApiOkResponse({ type: TokenEntity })
-	registrate(@Body() userDto: UserDto) {
-		return this.authService.registrate(userDto);
-	};
+    @Post('registration')
+    @ApiOkResponse({ type: TokenEntity })
+    registrate(@Body() userDto: UserDto) {
+        return this.authService.registrate(userDto);
+    }
 }

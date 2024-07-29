@@ -2,9 +2,27 @@ version: "3.9"
 services:
   postgres:
     image: postgres:13.3
+    volumes:
+      - postgres_storage:/data
     environment:
       POSTGRES_DB: ${DATABASE}
       POSTGRES_USER: ${USER}
       POSTGRES_PASSWORD: ${PASSWORD}
     ports:
       - "${PORT}:${PORT}"
+  
+  minio:
+    image: quay.io/minio/minio 
+    command: server --console-address ":9001" /data
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - minio_storage:/data
+    ports:
+      - "${MINIO_PORT0}:${MINIO_PORT0}"
+      - "${MINIO_PORT1}:${MINIO_PORT1}"
+
+volumes:
+  minio_storage: {}
+  postgres_storage: {}

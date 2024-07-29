@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+    BadRequestException,
+    Injectable,
+    NotFoundException,
+} from '@nestjs/common';
 import { User } from '@prisma/client';
 import { PaginationDto } from 'src/dto/pagination.dto';
 import { UpdateUserDto } from 'src/dto/updateUser.dto';
@@ -12,82 +16,110 @@ import { DescriptionEntity } from './entities/description.entity';
 
 @Injectable()
 export class UserService {
-	constructor(
-		private readonly usersRepository: UsersRepository,
-		private readonly jwtService: JwtService
-	) { }
+    constructor(
+        private readonly usersRepository: UsersRepository,
+        private readonly jwtService: JwtService,
+    ) {}
 
-	async getThisUserDescription(authorization: string): Promise<DescriptionEntity> {
+    async getThisUserDescription(
+        authorization: string,
+    ): Promise<DescriptionEntity> {
+        const [bearer, token] = authorization.split(' ');
+        if (bearer !== 'Bearer')
+            throw new BadRequestException('bad authorization header');
+        if (!token) throw new BadRequestException('no token was provided');
 
-		const [bearer, token] = authorization.split(' ');
-		if (bearer !== 'Bearer') throw new BadRequestException('bad authorization header');
-		if (!token) throw new BadRequestException('no token was provided');
+        const decodedToken: DecodedTokenDto =
+            await this.jwtService.decode(token);
 
-		const decodedToken: DecodedTokenDto = await this.jwtService.decode(token);
+        const user = await this.usersRepository.findUserByEmailOrId(
+            decodedToken.id,
+        );
 
-		const user = await this.usersRepository.findUserByEmailOrId(decodedToken.id);
+        if (user) return { description: user.description };
+        else throw new NotFoundException('user not found');
+    }
 
-		if (user) return { description: user.description };
-		else throw new NotFoundException('user not found');
+    async updateUserById(
+        id: number,
+        updateUserDto: UpdateUserDto,
+    ): Promise<User> {
+        if (updateUserDto.email) {
+            const isEmailExisting =
+                await this.usersRepository.findUserByEmailOrId(
+                    updateUserDto.email,
+                );
+            if (isEmailExisting && isEmailExisting.id !== id)
+                throw new BadRequestException(
+                    'user with such email already exists',
+                );
+        }
 
-	}
+        if (updateUserDto.password) {
+            const hashedPassword = await bcrypt.hash(updateUserDto.password, 5);
+            updateUserDto = { ...updateUserDto, password: hashedPassword };
+        }
 
-	async updateUserById(id: number, updateUserDto: UpdateUserDto): Promise<User> {
+        const updatedUser = await this.usersRepository.updateUser(
+            id,
+            updateUserDto,
+        );
+        return updatedUser;
+    }
 
-		if (updateUserDto.email) {
-			const isEmailExisting = await this.usersRepository.findUserByEmailOrId(updateUserDto.email);
-			if (isEmailExisting && isEmailExisting.id !== id) throw new BadRequestException('user with such email already exists');
-		}
+    async deleteUserById(idString: string): Promise<User> {
+        const id = Number(idString);
 
-		if (updateUserDto.password) {
-			const hashedPassword = await bcrypt.hash(updateUserDto.password, 5);
-			updateUserDto = { ...updateUserDto, password: hashedPassword };
-		}
+        try {
+            const deletedUser = this.usersRepository.deleteUserById(id);
+            return deletedUser;
+        } catch (e) {
+            throw new BadRequestException('user with such id not found');
+        }
+    }
 
-		const updatedUser = await this.usersRepository.updateUser(id, updateUserDto);
-		return updatedUser;
-	};
+    async createUser(dto: UserDto): Promise<User> {
+        return await this.usersRepository.createUser(dto);
+    }
 
-	async deleteUserById(idString: string): Promise<User> {
-		const id = Number(idString);
+    async getByEmail(email: string): Promise<User | null> {
+        return await this.usersRepository.findUserByEmailOrId(email);
+    }
 
-		try {
-			const deletedUser = this.usersRepository.deleteUserById(id);
-			return deletedUser;
-		} catch (e) {
-			throw new BadRequestException('user with such id not found');
-		}
-	}
+    async getAllUsers(query: PaginationDto): Promise<UsersPaginated> {
+        const page = Number(query.page);
+        const perPage = Number(query.perPage);
 
-	async createUser(dto: UserDto): Promise<User> {
-		return await this.usersRepository.createUser(dto);
-	};
+        if (!page || !perPage)
+            throw new BadRequestException(
+                'page and perPage queryParams should be provided and not be equal to zero',
+            );
 
-	async getByEmail(email: string): Promise<User | null> {
-		return await this.usersRepository.findUserByEmailOrId(email);
-	};
+        const userAmount = await this.usersRepository.countUsers(query.email);
 
-	async getAllUsers(query: PaginationDto): Promise<UsersPaginated> {
-		const page = Number(query.page);
-		const perPage = Number(query.perPage);
+        if (userAmount === 0)
+            throw new NotFoundException(
+                'no users were found by these parameters',
+            );
 
-		if (!page || !perPage) throw new BadRequestException('page and perPage queryParams should be provided and not be equal to zero');
+        const pagesAmount = Math.ceil(userAmount / perPage);
 
-		const userAmount = await this.usersRepository.countUsers(query.email);
+        if (page > pagesAmount)
+            throw new BadRequestException(
+                `page amount (${pagesAmount}) was exceeded`,
+            );
 
-		if (userAmount === 0) throw new NotFoundException('no users were found by these parameters');
+        const skip = (page - 1) * perPage;
+        const users = await this.usersRepository.findAllUsersPaginated(
+            skip,
+            perPage,
+            query.email,
+        );
 
-		const pagesAmount = Math.ceil(userAmount / perPage);
-
-		if (page > pagesAmount) throw new BadRequestException(`page amount (${pagesAmount}) was exceeded`);
-
-		const skip = (page - 1) * perPage;
-		const users = await this.usersRepository.findAllUsersPaginated(skip, perPage, query.email);
-
-		return {
-			users,
-			page,
-			pagesAmount,
-		};
-	};
+        return {
+            users,
+            page,
+            pagesAmount,
+        };
+    }
 }

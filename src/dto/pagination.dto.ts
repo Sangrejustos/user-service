@@ -1,5 +1,5 @@
 export class PaginationDto {
-	perPage: string;
-	page: string;
-	email?: string;
+    perPage: string;
+    page: string;
+    email?: string;
 }

@@ -3,17 +3,17 @@ import { PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class DatabaseService extends PrismaClient {
-	async onModuleInit() {
-		this.$connect();
-	}
+    async onModuleInit() {
+        this.$connect();
+    }
 
-	async onModuleDestroy() {
-		this.$disconnect();
-	}
+    async onModuleDestroy() {
+        this.$disconnect();
+    }
 
-	async enableShutdownHooks(app: INestApplication) {
-		process.on('beforeExit', async () => {
-			await app.close();
-		})
-	}
+    async enableShutdownHooks(app: INestApplication) {
+        process.on('beforeExit', async () => {
+            await app.close();
+        });
+    }
 }

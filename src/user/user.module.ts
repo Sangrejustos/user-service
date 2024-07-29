@@ -7,9 +7,9 @@ import { JwtModule } from '@nestjs/jwt';
 import { UsersRepository } from './user.repository';
 
 @Module({
-  controllers: [UserController],
-  providers: [UserService, UsersRepository],
-  imports: [DatabaseModule, forwardRef(() => AuthModule), JwtModule],
-  exports: [UserService],
+    controllers: [UserController],
+    providers: [UserService, UsersRepository],
+    imports: [DatabaseModule, forwardRef(() => AuthModule), JwtModule],
+    exports: [UserService],
 })
-export class UserModule { }
+export class UserModule {}
