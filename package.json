@@ -90,7 +90,8 @@
   },
   "lint-staged": {
     "*.{js,mjs,cjs,ts}": [
-      "eslint --fix"
+      "eslint --fix",
+      "prettier --write"
     ]
   }
 }
