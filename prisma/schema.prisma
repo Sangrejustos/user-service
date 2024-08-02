@@ -14,10 +14,18 @@ datasource db {
 }
 
 model User {
-  id          Int     @id @default(autoincrement())
-  email       String  @unique
+  id          Int      @id @default(autoincrement())
+  email       String   @unique
   login       String?
   password    String
-  age         Int     @db.SmallInt
-  description String  @db.VarChar(1000)
+  age         Int      @db.SmallInt
+  description String   @db.VarChar(1000)
+  avatars     Avatar[]
+}
+
+model Avatar {
+  uuid      String    @id @db.Uuid
+  user      User      @relation(fields: [userId], references: [id])
+  userId    Int
+  deletedAt DateTime? @db.Timestamptz(3)
 }

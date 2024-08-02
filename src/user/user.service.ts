@@ -3,6 +3,7 @@ import {
     Injectable,
     NotFoundException,
 } from '@nestjs/common';
+import { v4 as uuidv4 } from 'uuid';
 import { User } from '@prisma/client';
 import { PaginationDto } from 'src/dto/pagination.dto';
 import { UpdateUserDto } from 'src/dto/updateUser.dto';
@@ -13,12 +14,15 @@ import { JwtService } from '@nestjs/jwt';
 import { DecodedTokenDto } from 'src/dto/decodedToken.dto';
 import { UsersRepository } from './user.repository';
 import { DescriptionEntity } from './entities/description.entity';
+import { IFileService } from 'src/providers/files/files.adapter';
+import { IUploadedMulterFile } from 'src/providers/files/s3/interfaces/upload-file.interface';
 
 @Injectable()
 export class UserService {
     constructor(
         private readonly usersRepository: UsersRepository,
         private readonly jwtService: JwtService,
+        private readonly filesService: IFileService,
     ) {}
 
     async getThisUserDescription(
@@ -38,6 +42,34 @@ export class UserService {
 
         if (user) return { description: user.description };
         else throw new NotFoundException('user not found');
+    }
+
+    async uploadThisUserAvatar(
+        authorization: string,
+        file: IUploadedMulterFile,
+    ) {
+        //to MinIO
+        const fileUuid = uuidv4();
+        const result = await this.filesService.uploadFile({
+            file,
+            folder: '/users',
+            name: fileUuid,
+        });
+        if (result instanceof Error) throw result;
+
+        const [, token] = authorization.split(' ');
+        const decodedToken: DecodedTokenDto =
+            await this.jwtService.decode(token);
+        const userId = decodedToken.id;
+        const avatar = await this.usersRepository.createUserAvatar(
+            userId,
+            fileUuid,
+        );
+
+        return {
+            avatar,
+            result,
+        };
     }
 
     async updateUserById(

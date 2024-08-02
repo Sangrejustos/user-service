@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { User } from '@prisma/client';
+import { Avatar, User } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
 import { UpdateUserDto } from 'src/dto/updateUser.dto';
 import { UserDto } from 'src/dto/user.dto';
@@ -7,6 +7,16 @@ import { UserDto } from 'src/dto/user.dto';
 @Injectable()
 export class UsersRepository {
     constructor(private readonly databaseService: DatabaseService) {}
+    async createUserAvatar(userId: number, uuid: string): Promise<Avatar> {
+        return await this.databaseService.avatar.create({
+            data: {
+                uuid,
+                user: {
+                    connect: { id: userId },
+                },
+            },
+        });
+    }
 
     async findUserByEmailOrId(email: string): Promise<User | null>;
     async findUserByEmailOrId(id: number): Promise<User | null>;

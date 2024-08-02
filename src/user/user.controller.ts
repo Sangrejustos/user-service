@@ -9,6 +9,9 @@ import {
     Query,
     UseGuards,
     Headers,
+    UseInterceptors,
+    UploadedFile,
+    UsePipes,
 } from '@nestjs/common';
 import { UserDto } from 'src/dto/user.dto';
 import { UserService } from './user.service';
@@ -23,6 +26,9 @@ import {
 } from '@nestjs/swagger';
 import { UserEntity } from './entities/user.entity';
 import { DescriptionEntity } from './entities/description.entity';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { IUploadedMulterFile } from 'src/providers/files/s3/interfaces/upload-file.interface';
+import { UploadFileValidationPipe } from 'src/pipes/upload-file.pipe';
 
 @Controller('users')
 @ApiTags('users')
@@ -69,5 +75,16 @@ export class UserController {
     @UseGuards(AuthGuard)
     async getUserDescription(@Headers('authorization') authorization: string) {
         return await this.userService.getThisUserDescription(authorization);
+    }
+
+    @UseGuards(AuthGuard)
+    @Post('/upload-avatar')
+    @UseInterceptors(FileInterceptor('file'))
+    @UsePipes(new UploadFileValidationPipe())
+    async uploadUserAvatar(
+        @Headers('authorization') authorization: string,
+        @UploadedFile() file: IUploadedMulterFile,
+    ) {
+        return await this.userService.uploadThisUserAvatar(authorization, file);
     }
 }

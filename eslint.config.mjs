@@ -10,6 +10,12 @@ export default [
     },
     { languageOptions: { globals: globals.node } },
     {
-        ignores: ['**/*.spec.ts', '**/*.e2e-spec.ts', 'dist', 'node_modules'],
+        ignores: [
+            '**/*.spec.ts',
+            '**/*.pipe.ts',
+            '**/*.e2e-spec.ts',
+            'dist',
+            'node_modules',
+        ],
     },
 ];
