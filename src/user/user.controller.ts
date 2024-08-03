@@ -48,7 +48,7 @@ export class UserController {
         return await this.userService.getAllUsers(query);
     }
 
-    @Patch(':id')
+    @Patch('/update-user/:id')
     @ApiOkResponse({ type: UserEntity })
     async update(
         @Param('id') idString: string,
@@ -60,7 +60,7 @@ export class UserController {
         );
     }
 
-    @Delete(':id')
+    @Delete('/delete-user/:id')
     @ApiOkResponse({ type: UserEntity })
     async delete(@Param('id') idString: string) {
         return await this.userService.deleteUserById(idString);
@@ -86,5 +86,17 @@ export class UserController {
         @UploadedFile() file: IUploadedMulterFile,
     ) {
         return await this.userService.uploadThisUserAvatar(authorization, file);
+    }
+
+    @UseGuards(AuthGuard)
+    @Delete('/soft-delete-avatar/:uuid')
+    async softDeleteUserAvatar(
+        @Headers('authorization') authorization: string,
+        @Param('uuid') uuid: string,
+    ) {
+        return await this.userService.softDeleteThisUserAvatar(
+            authorization,
+            uuid,
+        );
     }
 }

@@ -2,6 +2,7 @@ import {
     BadRequestException,
     Injectable,
     NotFoundException,
+    UnprocessableEntityException,
 } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { User } from '@prisma/client';
@@ -48,6 +49,16 @@ export class UserService {
         authorization: string,
         file: IUploadedMulterFile,
     ) {
+        const [, token] = authorization.split(' ');
+        const decodedToken: DecodedTokenDto =
+            await this.jwtService.decode(token);
+        const userId = decodedToken.id;
+
+        const isAvatarLimitExceeded =
+            await this.usersRepository.checkAvatarLimit(userId);
+        if (isAvatarLimitExceeded)
+            throw new UnprocessableEntityException('avatar limit was exceeded');
+
         //to MinIO
         const fileUuid = uuidv4();
         const result = await this.filesService.uploadFile({
@@ -57,10 +68,6 @@ export class UserService {
         });
         if (result instanceof Error) throw result;
 
-        const [, token] = authorization.split(' ');
-        const decodedToken: DecodedTokenDto =
-            await this.jwtService.decode(token);
-        const userId = decodedToken.id;
         const avatar = await this.usersRepository.createUserAvatar(
             userId,
             fileUuid,
@@ -70,6 +77,18 @@ export class UserService {
             avatar,
             result,
         };
+    }
+
+    async softDeleteThisUserAvatar(authorization: string, uuid: string) {
+        const [, token] = authorization.split(' ');
+        const decodedToken: DecodedTokenDto =
+            await this.jwtService.decode(token);
+        const userId = decodedToken.id;
+
+        return await this.usersRepository.softDeleteThisUserAvatar(
+            userId,
+            uuid,
+        );
     }
 
     async updateUserById(

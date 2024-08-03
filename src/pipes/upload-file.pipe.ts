@@ -12,13 +12,17 @@ export class UploadFileValidationPipe implements PipeTransform {
         const allowedMimeTypes = ['image/jpeg', 'image/png'];
         const maxFileSize = 10 * 1024 * 1024;
 
-        if (!allowedMimeTypes.includes(value.mimetype!)) {
+        if (value.mimetype === undefined || value.size === undefined) {
+            throw new BadRequestException('invalid file format');
+        }
+
+        if (!allowedMimeTypes.includes(value.mimetype)) {
             throw new BadRequestException(
                 'Invalid file type. Only JPEG and PNG files are allowed.',
             );
         }
 
-        if (value.size! > maxFileSize) {
+        if (value.size > maxFileSize) {
             throw new BadRequestException(
                 'File size exceeds the limit of 10MB.',
             );

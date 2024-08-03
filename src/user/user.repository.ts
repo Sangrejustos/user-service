@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { Avatar, User } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
 import { UpdateUserDto } from 'src/dto/updateUser.dto';
@@ -7,6 +7,35 @@ import { UserDto } from 'src/dto/user.dto';
 @Injectable()
 export class UsersRepository {
     constructor(private readonly databaseService: DatabaseService) {}
+
+    async softDeleteThisUserAvatar(userId: number, uuid: string) {
+        return await this.databaseService.avatar.update({
+            where: {
+                uuid,
+                userId,
+            },
+            data: {
+                deletedAt: new Date(),
+            },
+        });
+    }
+
+    async checkAvatarLimit(userId: number): Promise<boolean> {
+        const avatarAmount = await this.databaseService.avatar.count({
+            where: { userId, deletedAt: null },
+        });
+        return new Promise((resolve, reject) => {
+            if (avatarAmount)
+                avatarAmount >= 5 ? resolve(true) : resolve(false);
+            else
+                reject(
+                    new BadRequestException(
+                        'something went wrong while counting user avatars amount',
+                    ),
+                );
+        });
+    }
+
     async createUserAvatar(userId: number, uuid: string): Promise<Avatar> {
         return await this.databaseService.avatar.create({
             data: {
