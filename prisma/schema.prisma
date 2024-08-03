@@ -21,6 +21,7 @@ model User {
   age         Int      @db.SmallInt
   description String   @db.VarChar(1000)
   avatars     Avatar[]
+  balance     Decimal  @default(0.00) @db.Decimal(10, 2)
 }
 
 model Avatar {

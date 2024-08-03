@@ -20,6 +20,7 @@ import { IFileService } from 'src/providers/files/files.adapter';
 import { IUploadedMulterFile } from 'src/providers/files/s3/interfaces/upload-file.interface';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import { TransferDto } from 'src/dto/transfer.dto';
 
 @Injectable()
 export class UserService {
@@ -139,6 +140,10 @@ export class UserService {
 
     async getByEmail(email: string): Promise<User | null> {
         return await this.usersRepository.findUserByEmailOrId(email);
+    }
+
+    async transfer(query: TransferDto) {
+        return await this.usersRepository.transfer(query);
     }
 
     async getAllUsers(query: PaginationDto): Promise<UsersPaginated> {

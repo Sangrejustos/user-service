@@ -1,5 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsInt, IsNotEmpty, IsString } from 'class-validator';
+import { Decimal } from '@prisma/client/runtime/library';
+import {
+    IsEmail,
+    IsInt,
+    IsNotEmpty,
+    IsNumber,
+    IsString,
+} from 'class-validator';
 
 export class UserDto {
     @ApiProperty()
@@ -20,4 +27,8 @@ export class UserDto {
     @ApiProperty()
     @IsString()
     description: string;
+
+    @ApiProperty()
+    @IsNumber({ maxDecimalPlaces: 2 })
+    balance: Decimal;
 }

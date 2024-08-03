@@ -1,6 +1,12 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+    BadRequestException,
+    ForbiddenException,
+    Injectable,
+} from '@nestjs/common';
 import { Avatar, User } from '@prisma/client';
+import { checkPrecision } from 'src/common/helpers/checkPrecision';
 import { DatabaseService } from 'src/database/database.service';
+import { TransferDto } from 'src/dto/transfer.dto';
 import { UpdateUserDto } from 'src/dto/updateUser.dto';
 import { UserDto } from 'src/dto/user.dto';
 
@@ -8,7 +14,53 @@ import { UserDto } from 'src/dto/user.dto';
 export class UsersRepository {
     constructor(private readonly databaseService: DatabaseService) {}
 
-    async softDeleteThisUserAvatar(userId: number, uuid: string) {
+    async transfer(query: TransferDto) {
+        if (!checkPrecision(query.amount, 2))
+            throw new BadRequestException(
+                'maximum 2 numbers after decimal point is allowed',
+            );
+
+        const from = Number(query.from);
+        const to = Number(query.to);
+        const amount = Number(query.amount);
+
+        return this.databaseService.$transaction(async (tx) => {
+            const sender = await tx.user.update({
+                where: {
+                    id: from,
+                },
+                data: {
+                    balance: {
+                        decrement: amount,
+                    },
+                },
+            });
+
+            if (Number(sender.balance) < 0) {
+                throw new ForbiddenException(
+                    'insufficient funds for transaction',
+                );
+            }
+
+            const recipient = await tx.user.update({
+                where: {
+                    id: to,
+                },
+                data: {
+                    balance: {
+                        increment: amount,
+                    },
+                },
+            });
+
+            return recipient;
+        });
+    }
+
+    async softDeleteThisUserAvatar(
+        userId: number,
+        uuid: string,
+    ): Promise<Avatar> {
         return await this.databaseService.avatar.update({
             where: {
                 uuid,

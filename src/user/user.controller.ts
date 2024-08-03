@@ -29,6 +29,7 @@ import { DescriptionEntity } from './entities/description.entity';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { IUploadedMulterFile } from 'src/providers/files/s3/interfaces/upload-file.interface';
 import { UploadFileValidationPipe } from 'src/pipes/upload-file.pipe';
+import { TransferDto } from 'src/dto/transfer.dto';
 
 @Controller('users')
 @ApiTags('users')
@@ -98,5 +99,10 @@ export class UserController {
             authorization,
             uuid,
         );
+    }
+
+    @Patch('/transfer')
+    async transfer(@Query() query: TransferDto) {
+        return await this.userService.transfer(query);
     }
 }
