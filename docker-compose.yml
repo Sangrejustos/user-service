@@ -23,6 +23,16 @@ services:
       - "${MINIO_API_PORT}:${MINIO_API_PORT}"
       - "${MINIO_CONSOLE_PORT}:${MINIO_CONSOLE_PORT}"
 
+  redis:
+    image: redis:alpine3.16
+    container_name: redis-cache
+    env_file: .env
+    command: >
+      --requirepass ${REDIS_PASSWORD} --port ${REDIS_PORT}
+    ports:
+      - "${REDIS_PORT}:${REDIS_PORT}"
+    restart: unless-stopped
+
 volumes:
   minio_storage: {}
   postgres_storage: {}

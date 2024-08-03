@@ -1,5 +1,6 @@
 import {
     BadRequestException,
+    Inject,
     Injectable,
     NotFoundException,
     UnprocessableEntityException,
@@ -17,6 +18,8 @@ import { UsersRepository } from './user.repository';
 import { DescriptionEntity } from './entities/description.entity';
 import { IFileService } from 'src/providers/files/files.adapter';
 import { IUploadedMulterFile } from 'src/providers/files/s3/interfaces/upload-file.interface';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class UserService {
@@ -24,6 +27,7 @@ export class UserService {
         private readonly usersRepository: UsersRepository,
         private readonly jwtService: JwtService,
         private readonly filesService: IFileService,
+        @Inject(CACHE_MANAGER) private cacheManager: Cache,
     ) {}
 
     async getThisUserDescription(
@@ -161,16 +165,30 @@ export class UserService {
             );
 
         const skip = (page - 1) * perPage;
-        const users = await this.usersRepository.findAllUsersPaginated(
-            skip,
-            perPage,
-            query.email,
-        );
 
-        return {
-            users,
-            page,
-            pagesAmount,
-        };
+        let response: UsersPaginated;
+        let users;
+        const cachedUsersRequest: UsersPaginated | undefined =
+            await this.cacheManager.get(
+                `/users?perPage=${perPage}&page=${page}${query.email ? '&email$' + query.email : ''}`,
+            );
+
+        if (cachedUsersRequest) response = cachedUsersRequest;
+        else {
+            users = await this.usersRepository.findAllUsersPaginated(
+                skip,
+                perPage,
+                query.email,
+            );
+
+            response = { users, page, pagesAmount };
+
+            await this.cacheManager.set(
+                `/users?perPage=${perPage}&page=${page}${query.email ? '&email$' + query.email : ''}`,
+                { ...response, fromCache: true },
+            );
+        }
+
+        return response;
     }
 }
