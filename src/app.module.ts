@@ -7,12 +7,24 @@ import { FilesModule } from './providers/files/files.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { redisStore } from 'cache-manager-redis-yet';
 import type { RedisClientOptions } from 'redis';
+import { BalanceModule } from './balance/balance.module';
+import { BullModule } from '@nestjs/bull';
 
 @Module({
     imports: [
         ConfigModule.forRoot({
             isGlobal: true,
             envFilePath: '../.env',
+        }),
+        BullModule.forRootAsync({
+            useFactory: (config: ConfigService) => ({
+                redis: {
+                    host: config.get<string>('REDIS_HOST'),
+                    port: parseInt(config.get<string>('REDIS_PORT') || '6379'),
+                    password: config.get<string>('REDIS_PASSWORD'),
+                },
+            }),
+            inject: [ConfigService],
         }),
         CacheModule.registerAsync<RedisClientOptions>({
             isGlobal: true,
@@ -34,6 +46,7 @@ import type { RedisClientOptions } from 'redis';
         AuthModule,
         UserModule,
         FilesModule,
+        BalanceModule,
     ],
 })
 export class AppModule {}

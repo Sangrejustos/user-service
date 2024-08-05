@@ -16,6 +16,6 @@ import { FilesModule } from 'src/providers/files/files.module';
         JwtModule,
         FilesModule,
     ],
-    exports: [UserService],
+    exports: [UserService, UsersRepository],
 })
 export class UserModule {}
